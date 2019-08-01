@@ -521,8 +521,8 @@ static struct ptp_clock_info ptp_hyperv_info = {
 	.enable         = hv_ptp_enable,
 	.adjtime        = hv_ptp_adjtime,
 	.adjfreq        = hv_ptp_adjfreq,
-	.gettime        = hv_ptp_gettime,
-	.settime        = hv_ptp_settime,
+	.gettime64      = hv_ptp_gettime,
+	.settime64      = hv_ptp_settime,
 	.owner		= THIS_MODULE,
 };
 
