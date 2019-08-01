@@ -294,7 +294,7 @@ static void hvs_channel_cb(void *ctx)
 	struct vmbus_channel *chan = hvs->chan;
 
 	if (hvs_channel_readable(chan))
-		sk->sk_data_ready(sk, 0);
+		sk->sk_data_ready(sk);
 
 	if (hv_get_bytes_to_write(&chan->outbound) > 0)
 		sk->sk_write_space(sk);
@@ -377,7 +377,7 @@ static void hvs_open_connection(struct vmbus_channel *chan)
 			goto out;
 
 		new = __vsock_create(sock_net(sk), NULL, sk, GFP_KERNEL,
-				     sk->sk_type);
+				     sk->sk_type, 0);
 		if (!new)
 			goto out;
 
@@ -615,7 +615,7 @@ static int hvs_dgram_bind(struct vsock_sock *vsk, struct sockaddr_vm *addr)
 	return -EOPNOTSUPP;
 }
 
-static int hvs_dgram_dequeue(struct kiocb *kiocb, struct vsock_sock *vsk,
+static int hvs_dgram_dequeue(struct vsock_sock *vsk,
 			     struct msghdr *msg, size_t len, int flags)
 {
 	return -EOPNOTSUPP;
