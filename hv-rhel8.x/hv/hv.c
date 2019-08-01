@@ -116,7 +116,7 @@ static int hv_ce_set_next_event(unsigned long delta,
 {
 	u64 current_tick;
 
-	WARN_ON(evt->mode != CLOCK_EVT_MODE_ONESHOT);
+	WARN_ON(!clockevent_state_oneshot(evt));
 
 	current_tick = hyperv_cs->read(NULL);
 	current_tick += delta;
@@ -124,31 +124,24 @@ static int hv_ce_set_next_event(unsigned long delta,
 	return 0;
 }
 
-static void hv_ce_setmode(enum clock_event_mode mode,
-			  struct clock_event_device *evt)
+static int hv_ce_shutdown(struct clock_event_device *evt)
+{
+	wrmsrl(HV_X64_MSR_STIMER0_COUNT, 0);
+	wrmsrl(HV_X64_MSR_STIMER0_CONFIG, 0);
+
+	return 0;
+}
+
+static int hv_ce_set_oneshot(struct clock_event_device *evt)
 {
 	union hv_timer_config timer_cfg;
 
-	switch (mode) {
-	case CLOCK_EVT_MODE_PERIODIC:
-		/* unsupported */
-		break;
+	timer_cfg.enable = 1;
+	timer_cfg.auto_enable = 1;
+	timer_cfg.sintx = VMBUS_MESSAGE_SINT;
+	wrmsrl(HV_X64_MSR_STIMER0_CONFIG, timer_cfg.as_uint64);
 
-	case CLOCK_EVT_MODE_ONESHOT:
-		timer_cfg.enable = 1;
-		timer_cfg.auto_enable = 1;
-		timer_cfg.sintx = VMBUS_MESSAGE_SINT;
-		hv_init_timer_config(0, timer_cfg.as_uint64);
-		break;
-
-	case CLOCK_EVT_MODE_UNUSED:
-	case CLOCK_EVT_MODE_SHUTDOWN:
-		hv_init_timer(0, 0);
-		hv_init_timer_config(0, 0);
-		break;
-	case CLOCK_EVT_MODE_RESUME:
-		break;
-	}
+	return 0;
 }
 
 static void hv_init_clockevent_device(struct clock_event_device *dev, int cpu)
@@ -164,7 +157,8 @@ static void hv_init_clockevent_device(struct clock_event_device *dev, int cpu)
 	 * references to the hv_vmbus module making it impossible to unload.
 	 */
 
-	dev->set_mode = hv_ce_setmode;
+	dev->set_state_shutdown = hv_ce_shutdown;
+	dev->set_state_oneshot = hv_ce_set_oneshot;
 	dev->set_next_event = hv_ce_set_next_event;
 }
 
@@ -446,8 +440,7 @@ void hv_synic_cleanup(void *arg)
 */
 	/* Turn off clockevent device */
 	if (ms_hyperv_ext.features & HV_X64_MSR_SYNTIMER_AVAILABLE)
-		hv_ce_setmode(CLOCK_EVT_MODE_SHUTDOWN,
-			      hv_context.clk_evt[cpu]);
+		hv_ce_shutdown(hv_context.clk_evt[cpu]);
 
 	hv_get_synint_state(VMBUS_MESSAGE_SINT, shared_sint.as_uint64);
 
