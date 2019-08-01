@@ -2430,10 +2430,6 @@ static int __init storvsc_drv_init(void)
 	if (!fc_transport_template)
 		return -ENODEV;
 
-	/*
-	 * Install Hyper-V specific timeout handler.
-	 */
-	fc_transport_template->eh_timed_out = storvsc_eh_timed_out;
 	fc_transport_template->user_scan = NULL;
 #endif
 
