@@ -2096,7 +2096,7 @@ static int netvsc_vf_join(struct net_device *vf_netdev,
 	}
 
 #if (RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(7,4))
-        ret = netdev_master_upper_dev_link(vf_netdev, ndev,
+        ret = netdev_master_upper_dev_link(vf_netdev, ndev, NULL,
                                            NULL, NULL);
 #else
         ret = netdev_master_upper_dev_link(vf_netdev, ndev);
