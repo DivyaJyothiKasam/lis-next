@@ -1,0 +1,31 @@
+echo "Get rid of the Hyper-V drivers and modprobe rules"
+if [ "$KERNEL_VERSION" == "" ]
+then
+	KERNEL_VERSION=$(uname -r)
+fi
+
+rm -rf /lib/modules/$KERNEL_VERSION/extra/lis-mlx
+rm -rf  /lib/modules/$KERNEL_VERSION/extra/hv_*.ko
+rm -rf  /lib/modules/$KERNEL_VERSION/extra/hid-hyperv.ko
+rm -rf  /lib/modules/$KERNEL_VERSION/extra/hyperv_fb.ko
+rm -rf  /lib/modules/$KERNEL_VERSION/extra/hyperv-keyboard.ko
+rm -rf  /lib/modules/$KERNEL_VERSION/extra/pci-hyperv.ko
+rm -rf  /lib/modules/$KERNEL_VERSION/extra/uio_hv_generic.ko
+
+rm -rf  /lib/modules/$KERNEL_VERSION/extra/microsoft-hyper-v/hv_*.ko
+rm -rf /etc/modprobe.d/hyperv_pvdrivers.conf
+rm -f /etc/modprobe.d/hyperv_mod_blacklist.conf
+
+echo "Get rid of ip injection scripts"
+rm -rf /usr/sbin/hv_get_dns_info
+rm -rf /usr/sbin/hv_get_dhcp_info
+rm -rf /usr/sbin/hv_set_ifconfig
+
+echo "Removing lsvmbus tool"
+rm -rf /usr/sbin/lsvmbus
+
+depmod
+
+echo "Create and install initramfs without Hyper-V drivers"
+dracut --force  "initramfs-$KERNEL_VERSION.img" $KERNEL_VERSION
+cp -f "initramfs-$KERNEL_VERSION.img" /boot/"initramfs-$KERNEL_VERSION.img"
