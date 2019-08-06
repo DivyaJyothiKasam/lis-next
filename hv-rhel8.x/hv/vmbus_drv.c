@@ -45,6 +45,7 @@
 #include <linux/ptrace.h>
 #include <linux/kdebug.h>
 #include "hyperv_vmbus.h"
+#include <linux/sched/task_stack.h>
 
 struct vmbus_dynid {
 	struct list_head node;
